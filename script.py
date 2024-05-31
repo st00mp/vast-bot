@@ -56,3 +56,8 @@ while True:
     instance_ids = get_vast_instance_ids()
     check_vast_instances(instance_ids)
     time.sleep(300)  # Vérifie toutes les 5 minutes
+
+print("hello")
+
+
+
