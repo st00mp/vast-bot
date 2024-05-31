@@ -4,16 +4,13 @@ import time
 import requests
 
 TELEGRAM_TOKEN = '6376514217:AAHxvSy7OB5Da9UVgTK-45y6Az7M1spqMQ4'
-TELEGRAM_CHAT_ID = '637620194'  # Utilisation de l'ID de chat correct
+TELEGRAM_CHAT_ID = '637620194'
 VAST_API_KEY = '8d1cd11f65f38ff2a2cb4fa7098403202d5eca4ad5957be6021a04a1441502c4'
 
 # Fonction pour envoyer des messages Telegram
-def send_telegram_message(message):
+def send_telegram_message(message, chat_id=TELEGRAM_CHAT_ID):
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
-    payload = {
-        'chat_id': TELEGRAM_CHAT_ID,
-        'text': message
-    }
+    payload = {'chat_id': chat_id, 'text': message}
     response = requests.post(url, data=payload)
     return response.json()
 
@@ -32,6 +29,18 @@ def get_vast_instance_ids():
     print("Instance IDs trouvées:", instance_ids)  # Debug: afficher les IDs des instances
     return instance_ids
 
+# Fonction pour vérifier le solde des crédits
+def check_credit_balance():
+    result = subprocess.run(['vastai', 'show', 'user', '--raw'], capture_output=True, text=True)
+    user_info = json.loads(result.stdout)
+    credit_balance = round(user_info.get('credit', 0), 2)
+    print("Solde des crédits:", credit_balance)  # Debug: afficher le solde des crédits
+    if credit_balance < 10:  # Seuil de crédit bas, par exemple, 10 euros
+        send_telegram_message(f"Avertissement : Le solde des crédits est faible ({credit_balance} euros). L'instance risque de se couper bientôt.")
+    elif credit_balance < 50:
+        send_telegram_message(f"Attention : Le solde des crédits commence à baisser ({credit_balance} euros). Surveillez vos crédits.")
+    return credit_balance
+
 # Fonction pour vérifier l'état des instances Vast
 def check_vast_instances(instance_ids):
     for instance_id in instance_ids:
@@ -42,6 +51,28 @@ def check_vast_instances(instance_ids):
             message = f"Instance {instance['id']} is {instance['cur_state']}."
             send_telegram_message(message)
 
+# Fonction pour gérer les messages Telegram
+def handle_telegram_updates():
+    last_update_id = None
+    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/getUpdates"
+    params = {'timeout': 100, 'offset': last_update_id}
+
+    while True:
+        response = requests.get(url, params=params)
+        updates = response.json().get('result', [])
+
+        for update in updates:
+            last_update_id = update['update_id'] + 1
+            message = update.get('message', {})
+            chat_id = message.get('chat', {}).get('id')
+            text = message.get('text', '')
+
+            if text == '/credit':
+                credit_balance = check_credit_balance()
+                send_telegram_message(f"Le solde de vos crédits est de {credit_balance} euros.", chat_id)
+
+        params['offset'] = last_update_id
+
 # Fonction pour tester l'envoi de notification
 def test_telegram_notification():
     message = "Test de notification : le bot Telegram fonctionne correctement."
@@ -51,8 +82,10 @@ def test_telegram_notification():
 # Test de notification
 test_telegram_notification()
 
-# Boucle pour vérifier les instances à intervalles réguliers
+# Boucle pour vérifier les instances et gérer les commandes à intervalles réguliers
 while True:
     instance_ids = get_vast_instance_ids()
     check_vast_instances(instance_ids)
+    check_credit_balance()  # Vérification du solde des crédits
+    handle_telegram_updates()  # Gérer les commandes Telegram
     time.sleep(300)  # Vérifie toutes les 5 minutes
