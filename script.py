@@ -2,13 +2,13 @@ import subprocess
 import json
 import time
 import requests
+import os
 
 TELEGRAM_TOKEN = '6376514217:AAHxvSy7OB5Da9UVgTK-45y6Az7M1spqMQ4'
 VAST_API_KEYS = {}  # Dictionary to store API keys for each user
 REGISTERED_CHAT_IDS = set()  # Set to store registered chat IDs
-IMAGE_PATH = '/Users/st00mp/PycharmProjects/Vast-Notification-Bot/vast-notification-bot-help-api.png'
+IMAGE_PATH = '/home/ec2-user/vast-notification-bot-help-api.png'
 AWAITING_API_KEY = set()  # Set to track users who need to send their API key
-
 
 # Function to send Telegram messages
 def send_telegram_message(message, chat_id):
@@ -16,7 +16,6 @@ def send_telegram_message(message, chat_id):
     payload = {'chat_id': chat_id, 'text': message, 'parse_mode': 'Markdown'}
     response = requests.post(url, data=payload)
     return response.json()
-
 
 # Function to send images to Telegram
 def send_telegram_image(image_path, caption, chat_id):
@@ -27,11 +26,9 @@ def send_telegram_image(image_path, caption, chat_id):
         response = requests.post(url, data=payload, files=files)
     return response.json()
 
-
 # Function to set the Vast.ai API key for a user
 def set_vast_api_key(chat_id, api_key):
     VAST_API_KEYS[chat_id] = api_key
-
 
 # Function to get instance IDs for a user
 def get_vast_instance_ids(api_key):
@@ -42,7 +39,6 @@ def get_vast_instance_ids(api_key):
     print("Instance IDs found:", instance_ids)  # Debug: display instance IDs
     return instance_ids
 
-
 # Function to check credit balance for a user
 def check_credit_balance(api_key):
     result = subprocess.run(['vastai', 'set', 'api-key', api_key], capture_output=True, text=True)
@@ -51,7 +47,6 @@ def check_credit_balance(api_key):
     credit_balance = round(user_info.get('credit', 0), 2)
     print("Credit balance:", credit_balance)  # Debug: display credit balance
     return credit_balance
-
 
 # Function to check instance status and performance for a user
 def check_vast_instances(api_key):
@@ -77,7 +72,6 @@ def check_vast_instances(api_key):
 
     return problematic_instances
 
-
 # Function to get and format instance information for a user
 def get_instance_info(api_key):
     instance_ids = get_vast_instance_ids(api_key)
@@ -94,7 +88,6 @@ def get_instance_info(api_key):
                         f"🌡 GPU Temperature: {instance.get('gpu_temp', 'N/A')}°C")
         info_messages.append(info_message)
     return "\n\n".join(info_messages)
-
 
 # Function to handle Telegram updates
 def handle_telegram_updates():
@@ -146,14 +139,12 @@ def handle_telegram_updates():
 
         params['offset'] = last_update_id
 
-
 # Function to test notification sending
 def test_telegram_notification():
     for chat_id in REGISTERED_CHAT_IDS:
         message = "Notification test: the Telegram bot is working correctly."
         response = send_telegram_message(message, chat_id)
         print("Notification test response:", response)  # Debug: display API response
-
 
 # Notification test
 test_telegram_notification()
