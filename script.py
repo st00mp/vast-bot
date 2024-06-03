@@ -2,12 +2,18 @@ import subprocess
 import json
 import time
 import requests
-import os
+import os  # Import for environment variables
+import vastai
+import re  # Import for regular expressions
 
-TELEGRAM_TOKEN = '6376514217:AAHxvSy7OB5Da9UVgTK-45y6Az7M1spqMQ4'
+# Get the Telegram token from environment variables
+TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
+if not TELEGRAM_TOKEN:
+    raise ValueError("No TELEGRAM_TOKEN found in environment variables")
+
 VAST_API_KEYS = {}  # Dictionary to store API keys for each user
 REGISTERED_CHAT_IDS = set()  # Set to store registered chat IDs
-IMAGE_PATH = '/home/ec2-user/vast-notification-bot-help-api.png'
+IMAGE_PATH = '/home/ec2-user/vast-notification-bot-help-api.png'  # Correct the image path
 AWAITING_API_KEY = set()  # Set to track users who need to send their API key
 
 # Function to send Telegram messages
@@ -26,14 +32,36 @@ def send_telegram_image(image_path, caption, chat_id):
         response = requests.post(url, data=payload, files=files)
     return response.json()
 
+# Function to validate the API key
+def is_valid_api_key(api_key):
+    return bool(re.match(r'^[a-f0-9]{64}$', api_key))
+
 # Function to set the Vast.ai API key for a user
 def set_vast_api_key(chat_id, api_key):
-    VAST_API_KEYS[chat_id] = api_key
+    if is_valid_api_key(api_key):
+        VAST_API_KEYS[chat_id] = api_key
+        return True
+    return False
+
+# Function to remove the Vast.ai API key for a user
+def remove_vast_api_key(chat_id):
+    if chat_id in VAST_API_KEYS:
+        del VAST_API_KEYS[chat_id]
+        return True
+    return False
 
 # Function to get instance IDs for a user
 def get_vast_instance_ids(api_key):
     result = subprocess.run(['vastai', 'set', 'api-key', api_key], capture_output=True, text=True)
+    if result.returncode != 0:
+        print(f"Error setting API key: {result.stderr}")
+        return []
+
     result = subprocess.run(['vastai', 'show', 'instances', '--raw'], capture_output=True, text=True)
+    if result.returncode != 0:
+        print(f"Error showing instances: {result.stderr}")
+        return []
+
     instances = json.loads(result.stdout)
     instance_ids = [instance['id'] for instance in instances]
     print("Instance IDs found:", instance_ids)  # Debug: display instance IDs
@@ -42,7 +70,15 @@ def get_vast_instance_ids(api_key):
 # Function to check credit balance for a user
 def check_credit_balance(api_key):
     result = subprocess.run(['vastai', 'set', 'api-key', api_key], capture_output=True, text=True)
+    if result.returncode != 0:
+        print(f"Error setting API key: {result.stderr}")
+        return 0
+
     result = subprocess.run(['vastai', 'show', 'user', '--raw'], capture_output=True, text=True)
+    if result.returncode != 0:
+        print(f"Error showing user info: {result.stderr}")
+        return 0
+
     user_info = json.loads(result.stdout)
     credit_balance = round(user_info.get('credit', 0), 2)
     print("Credit balance:", credit_balance)  # Debug: display credit balance
@@ -56,6 +92,10 @@ def check_vast_instances(api_key):
     for instance_id in instance_ids:
         result = subprocess.run(['vastai', 'show', 'instance', str(instance_id), '--raw'], capture_output=True,
                                 text=True)
+        if result.returncode != 0:
+            print(f"Error showing instance {instance_id}: {result.stderr}")
+            continue
+
         instance = json.loads(result.stdout)
         print("Instance details:", instance)  # Debug: display instance details
 
@@ -79,6 +119,10 @@ def get_instance_info(api_key):
     for instance_id in instance_ids:
         result = subprocess.run(['vastai', 'show', 'instance', str(instance_id), '--raw'], capture_output=True,
                                 text=True)
+        if result.returncode != 0:
+            print(f"Error showing instance {instance_id}: {result.stderr}")
+            continue
+
         instance = json.loads(result.stdout)
         info_message = (f"🆔 Instance ID: {instance_id}\n"
                         f"🏷 Label: {instance.get('label', 'No label')}\n"
@@ -111,9 +155,16 @@ def handle_telegram_updates():
                            "You will find your API key on https://cloud.vast.ai/account/ under 'API Keys'.")
                 send_telegram_image(IMAGE_PATH, caption, chat_id)
             elif chat_id in AWAITING_API_KEY and not text.startswith('/'):
-                set_vast_api_key(chat_id, text)
-                AWAITING_API_KEY.remove(chat_id)
-                send_telegram_message("Your API key has been set successfully.", chat_id)
+                if set_vast_api_key(chat_id, text.strip()):
+                    AWAITING_API_KEY.remove(chat_id)
+                    send_telegram_message("Your API key has been set successfully.", chat_id)
+                else:
+                    send_telegram_message("Invalid API key format. Please try again.", chat_id)
+            elif text == '/removeapikey':
+                if remove_vast_api_key(chat_id):
+                    send_telegram_message("Your API key has been removed successfully.", chat_id)
+                else:
+                    send_telegram_message("No API key found to remove.", chat_id)
             elif text == '/credit':
                 if chat_id in VAST_API_KEYS:
                     credit_balance = check_credit_balance(VAST_API_KEYS[chat_id])
@@ -134,6 +185,7 @@ def handle_telegram_updates():
                                  "🔹 /setapikey - Set your Vast.ai API key\n"
                                  "📊 /infos - Get detailed information about your instances\n"
                                  "💰 /credit - Check your current credit balance\n"
+                                 "❌ /removeapikey - Remove your current API key\n"
                                  "🚀 /start - Display this help message")
                 send_telegram_message(start_message, chat_id)
 
