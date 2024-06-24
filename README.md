@@ -1,4 +1,3 @@
-```markdown
 # Vast.ai Notification Bot
 
 ## Description
@@ -86,4 +85,3 @@ Contributions are welcome! Please submit a pull request or open an issue to disc
 
 ## Authors
 - st00mp (https://github.com/st00mp)
-```
