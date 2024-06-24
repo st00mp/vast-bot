@@ -1,0 +1,6 @@
+Flask
+requests
+gunicorn
+vastai
+python-dotenv
+cryptography
