@@ -25,11 +25,11 @@ This project is a Telegram bot that monitors and notifies the user about the sta
 ## Installation
 1. Clone the repository:
     ```sh
-    git clone https://github.com/your-username/vastai-notification-bot.git
+    git clone https://github.com/st00mp/vast-bot.git
     ```
 2. Navigate to the project directory:
     ```sh
-    cd vastai-notification-bot
+    cd vast-bot
     ```
 3. Install the dependencies:
     ```sh
