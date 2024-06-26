@@ -1,7 +1,15 @@
 # Vast.ai Notification Bot
 
 ## Description
-This project is a Telegram bot that monitors and notifies the user about the status of Vast.ai instances. It offers functionalities such as checking the credit balance, retrieving detailed information about instances, and monitoring GPU and CPU utilization. The bot can also check the balance of a Nimble wallet. User API keys for Vast.ai are encrypted and securely stored on the server.
+This project is a Telegram bot that monitors and notifies the user about the status of Vast.ai instances. The primary functionality of the bot is to alert users immediately when there is an issue with their instances, such as when an instance stops working or has low GPU utilization. This allows users to quickly restart their Nimble cryptocurrency miners, preventing wasted GPU time and saving money.
+
+Additionally, the bot offers functionalities such as:
+- Checking the credit balance of Vast.ai accounts.
+- Retrieving detailed information about instances.
+- Monitoring GPU and CPU utilization.
+- Checking the balance of a Nimble wallet.
+
+User API keys for Vast.ai are encrypted and securely stored on the server to ensure privacy and security.
 
 ## Features
 - **API Key Management**: Add or remove your Vast.ai API key.
@@ -10,6 +18,10 @@ This project is a Telegram bot that monitors and notifies the user about the sta
 - **Nimble Wallet Management**: Add, remove, and check the balance of your Nimble wallet.
 - **Automatic Notifications**: Receive notifications when your instances have unusually low GPU or CPU usage.
 - **Secure Storage**: User API keys are encrypted and securely stored on the server.
+
+## Demo Video
+
+Watch the demo of the bot in action: [Demo on YouTube](https://youtu.be/Tk-xdRwadiQ?si=aFUd4gKqZsIOkKir)
 
 ## Technologies
 - Python
@@ -41,7 +53,6 @@ This project is a Telegram bot that monitors and notifies the user about the sta
         ```
         TELEGRAM_TOKEN=your_telegram_token
         ```
-
 ## Usage
 1. Start the bot:
     ```sh
