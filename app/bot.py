@@ -7,7 +7,6 @@ import requests
 import re
 import logging
 from threading import Thread
-import vastai  # Import vastai
 from app.storage_utils import save_api_keys, load_api_keys, save_master_wallets, load_master_wallets
 
 # Load environment variables from a .env file
