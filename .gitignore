@@ -64,3 +64,8 @@ venv.bak/
 
 # Secret key
 secret.key
+objects/
+hooks/
+info/
+app/api_keys.json
+app/master_wallets.json

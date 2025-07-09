@@ -47,7 +47,11 @@ Watch the demo of the bot in action: [Demo on YouTube](https://youtu.be/Tk-xdRwa
     ```sh
     pip install -r requirements.txt
     ```
-4. Configure the environment variables:
+4. Generate the encryption key:
+    ```sh
+    python generate_key.py
+    ```
+5. Configure the environment variables:
     - Create a `.env` file in the project's root directory.
     - Add your Telegram token:
         ```
@@ -96,3 +100,6 @@ Contributions are welcome! Please submit a pull request or open an issue to disc
 
 ## Authors
 - st00mp (https://github.com/st00mp)
+
+## License
+This project is licensed under the [MIT License](LICENSE).
